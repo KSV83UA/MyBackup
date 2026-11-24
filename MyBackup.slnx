@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/MyBackup.Core/MyBackup.Core.csproj" />
+    <Project Path="src/MyBackup.Web/MyBackup.Web.csproj" />
+    <Project Path="src/MyBackup.Service/MyBackup.Service.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/MyBackup.Core.Tests/MyBackup.Core.Tests.csproj" />
+    <Project Path="tests/MyBackup.Web.Tests/MyBackup.Web.Tests.csproj" />
+  </Folder>
+</Solution>

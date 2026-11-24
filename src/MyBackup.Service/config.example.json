@@ -1,0 +1,81 @@
+// Настройки MyBackup. Положите файл в %ProgramData%\MyBackup\config.json.
+// Пароли и токены лучше хранить зашифрованными: MyBackup.exe protect "секрет" → "dpapi:...".
+{
+  // Имя сервера в отчётах и снимках; по умолчанию — имя компьютера. Задайте до первой копии:
+  // при смене имени начнутся новые цепочки снимков.
+  // "serverName": "RDP-1C",
+
+  "restic": {
+    // Офис или VPS с rest-server --append-only (рекомендуется):
+    "repository": "rest:https://backup.example.ru:8000/rdp-1c/",
+    // S3:      "s3:https://s3.example.ru/bucket/rdp-1c"  (ключи — в environment ниже)
+    // SFTP:    "sftp:backup@host:/srv/restic/rdp-1c"
+    // Диск/NAS: "D:\\restic-repo" или "\\\\nas\\backup\\rdp-1c"
+    "password": "dpapi:ЗАМЕНИТЕ",
+    "environment": {
+      // "AWS_ACCESS_KEY_ID": "dpapi:...",
+      // "AWS_SECRET_ACCESS_KEY": "dpapi:..."
+    },
+    // Меньший пакет — меньше потерь при обрыве (по умолчанию restic использует 16 МиБ).
+    "packSizeMiB": 8,
+    "useVss": true
+  },
+
+  // Повторы при обрывах: пауза 1, 2, 4… минут, не больше 30, всего до 10 неудачных попыток.
+  "retry": { "maxAttempts": 10, "initialDelay": "00:01:00", "maxDelay": "00:30:00" },
+
+  // Днём не забиваем канал пользователям RDP.
+  "bandwidth": {
+    "workHours": "08:00-20:00",
+    "workDays": [ "Monday", "Tuesday", "Wednesday", "Thursday", "Friday" ],
+    "workHoursUploadLimitKiB": 1024,
+    "offHoursUploadLimitKiB": 0
+  },
+
+  "telegram": {
+    "enabled": true,
+    "botToken": "dpapi:ЗАМЕНИТЕ",
+    // chat_id проще всего добавить в веб-интерфейсе: напишите боту — чат появится в «Настройки → Telegram».
+    "allowedChatIds": [ 123456789 ],
+    // "proxy": "socks5://127.0.0.1:1080",
+    "notifyOnStart": false,
+    "enableCommands": true
+  },
+
+  // Веб-интерфейс. По умолчанию открывается только на самом сервере: http://127.0.0.1:8480
+  // Пароль задаётся командой MyBackup.exe web-password. Для доступа по сети (лучше через VPN):
+  //   "urls": [ "https://0.0.0.0:8443" ], "certificatePath": "C:\\ProgramData\\MyBackup\\web.pfx", "certificatePassword": "dpapi:..."
+  // После сохранения настроек из веб-интерфейса комментарии в этом файле не сохраняются
+  // (прежняя версия остаётся в config-backups).
+  "web": {
+    "enabled": true,
+    "urls": [ "http://127.0.0.1:8480" ]
+  },
+
+  "jobs": [
+    {
+      "name": "nightly",
+      "schedule": "0 1 * * *",
+      // Сколько времени после старта можно докачивать при обрывах.
+      "maxDuration": "06:00:00",
+      "sources": [
+        { "type": "fileBase1C", "name": "Бухгалтерия", "path": "D:\\1C\\Buh" },
+        { "type": "fileBase1C", "name": "ЗУП", "path": "D:\\1C\\ZUP" },
+
+        { "type": "msSql", "connectionString": "Server=.;Integrated Security=true;TrustServerCertificate=true",
+          "databases": [ "*" ], "excludeDatabases": [ "test" ] },
+
+        // { "type": "postgreSql", "pgDumpPath": "C:\\Program Files\\PostgreSQL\\16\\bin\\pg_dump.exe",
+        //   "user": "postgres", "password": "dpapi:...", "databases": [ "*" ] },
+
+        { "type": "userProfiles", "excludeUsers": [ "Administrator", "Администратор" ] },
+
+        { "type": "paths", "name": "Обмен", "paths": [ "D:\\Exchange", "D:\\Scans" ], "exclude": [ "*.tmp", "*.log" ] },
+
+        { "type": "oneCService" }
+      ],
+      // Для append-only хранилища очистка выполняется на стороне хранилища, здесь — false.
+      "retention": { "applyFromClient": false, "keepDaily": 7, "keepWeekly": 4, "keepMonthly": 12 }
+    }
+  ]
+}
